@@ -2,6 +2,10 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build]
+# Include _static/ even though it's gitignored (built frontend assets)
+ignore-vcs = true
+
 [tool.hatch.build.targets.wheel]
 packages = ["pandapower_viz"]
 
