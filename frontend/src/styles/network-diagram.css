@@ -1,0 +1,114 @@
+.ppviz-network-preview {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.ppviz-network-canvas {
+  width: 100%;
+  height: 100%;
+  background: var(--ppviz-network-bg);
+}
+
+.ppviz-compact-mode-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: #e5e5e5;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.ppviz-compact-mode-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.ppviz-compact-mode-legend {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ppviz-compact-mode-legend span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  color: #a1a1aa;
+}
+
+.ppviz-compact-mode-legend i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.ppviz-diagram-legend {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  display: flex;
+  gap: 10px;
+  background: var(--ppviz-bg-secondary);
+  border: 1px solid var(--ppviz-border-color);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--ppviz-text-secondary);
+  z-index: 5;
+}
+
+.ppviz-diagram-legend i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.ppviz-network-controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  z-index: 10;
+}
+
+.ppviz-network-controls button {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ppviz-bg-secondary);
+  border: 1px solid var(--ppviz-border-color);
+  border-radius: var(--ppviz-radius-sm);
+  color: var(--ppviz-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ppviz-network-controls button:hover {
+  background: var(--ppviz-bg-hover);
+  color: var(--ppviz-text-primary);
+  transform: scale(1.05);
+}
+
+.ppviz-network-controls button.active {
+  background: var(--ppviz-brand-accent);
+  border-color: var(--ppviz-brand-accent);
+  color: var(--ppviz-accent-fg);
+}
+
+.ppviz-network-controls button svg {
+  width: 16px;
+  height: 16px;
+}

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+lib/
+pandapower_viz/_static/
+*.egg-info/
+__pycache__/
+.venv/
+.env
+*.pyc

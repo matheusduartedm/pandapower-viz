@@ -1,0 +1,18 @@
+:root {
+  --ppviz-bg-primary: #1a1a1c;
+  --ppviz-bg-secondary: #222224;
+  --ppviz-bg-tertiary: #2a2a2d;
+  --ppviz-bg-hover: #2e2e30;
+  --ppviz-border-color: #38383b;
+  --ppviz-border-subtle: #2a2a2d;
+  --ppviz-text-primary: #cccccc;
+  --ppviz-text-secondary: #969696;
+  --ppviz-text-muted: #6e6e6e;
+  --ppviz-brand-accent: #36B5A0;
+  --ppviz-accent-fg: #1a1a1c;
+  --ppviz-network-bg: #181818;
+  --ppviz-radius-sm: 3px;
+  --ppviz-radius-md: 6px;
+  --ppviz-font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --ppviz-font-mono: 'JetBrains Mono', monospace;
+}
