@@ -247,8 +247,9 @@ export interface PowerFlowResults {
   trafo_results?: PowerFlowTrafoResult[];
 }
 
-// Simplified AnalysisResults for viz - accepts MWatt's full version via index signature
+// Simplified AnalysisResults for viz — only needs power_flow for coloring.
+// MWatt's full AnalysisResults (with connection_study, protection, etc.)
+// is structurally compatible since it also has power_flow.
 export interface VizAnalysisResults {
   power_flow: PowerFlowResults;
-  [key: string]: unknown;
 }

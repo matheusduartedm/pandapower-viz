@@ -4,12 +4,12 @@
   "type": "module",
   "main": "./dist/pandapower-viz.cjs",
   "module": "./dist/pandapower-viz.js",
-  "types": "./dist/index.d.ts",
+  "types": "./src/index.ts",
   "exports": {
     ".": {
       "import": "./dist/pandapower-viz.js",
       "require": "./dist/pandapower-viz.cjs",
-      "types": "./dist/index.d.ts"
+      "types": "./src/index.ts"
     },
     "./dist/style.css": "./dist/style.css"
   },

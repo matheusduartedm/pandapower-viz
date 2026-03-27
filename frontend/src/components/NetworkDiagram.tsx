@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { Network, Options } from 'vis-network';
 import { DataSet } from 'vis-data';
-import type { PandaPowerNetwork, NetworkNode, NetworkEdge, ElementInfo, BusAnnotation, VizAnalysisResults } from '../core/types';
+import type { PandaPowerNetwork, ElementInfo, BusAnnotation, VizAnalysisResults } from '../core/types';
 import { getElementInfo, getCompactBusInfo, convertToVisNetwork, convertToVisNetworkCompact } from '../core/parser';
 import { calculateTreeLayout } from '../core/layout';
 

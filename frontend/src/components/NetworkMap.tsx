@@ -62,7 +62,7 @@ function FitBounds({ geodata }: { geodata: BusGeoData[] }) {
 
 export function NetworkMap({
   network,
-  theme = 'dark',
+  theme: _theme = 'dark',
   onElementSelect,
   analysisResults,
   noGeoDataMessage,
