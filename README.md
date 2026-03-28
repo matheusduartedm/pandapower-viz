@@ -1,6 +1,6 @@
 # pandapower-viz
 
-Interactive web visualizer for [pandapower](https://www.pandapower.org/) networks. Render power system diagrams and geographic maps in the browser — from Python or React.
+Interactive web visualizer for [pandapower](https://www.pandapower.org/) networks. Render power system diagrams and geographic maps — in the browser, in Jupyter notebooks, or embedded in React apps.
 
 ![pandapower-viz screenshot](docs/screenshot.png)
 
