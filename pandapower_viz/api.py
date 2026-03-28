@@ -26,7 +26,10 @@ def show(
     - **Terminal/script**: starts a local web server and opens the browser.
 
     Args:
-        net: A pandapower network (with or without power flow results).
+        net: One of:
+            - A ``pandapower.pandapowerNet`` object
+            - A JSON string (from ``pp.to_json(net)``)
+            - A dict (from ``json.loads(pp.to_json(net))``)
         port: Port for the local server (default: 8050). Ignored in Jupyter.
         open_browser: Whether to auto-open the browser. Ignored in Jupyter.
 
@@ -37,17 +40,17 @@ def show(
     if _is_jupyter():
         from .widget import NetworkWidget
 
-        return NetworkWidget.from_net(net)
+        return NetworkWidget.from_data(net)
 
     _show_server(net, port, open_browser)
 
 
 def _show_server(net, port: int, open_browser: bool) -> None:
     """Start a local FastAPI server to visualize the network."""
-    from .adapter import net_to_json
+    from .adapter import normalize_to_json
     from .server import app, set_network
 
-    network_json = net_to_json(net)
+    network_json = normalize_to_json(net)
     set_network(network_json)
 
     if open_browser:
