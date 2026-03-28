@@ -30,9 +30,10 @@ export default defineConfig(({ mode }) => {
     };
   }
 
-  // Default: standalone app build (for Python server)
+  // Default: standalone app build (for Python server / GitHub Pages)
   return {
     plugins: [react()],
+    base: process.env.GITHUB_PAGES ? '/pandapower-viz/' : '/',
     build: {
       outDir: '../pandapower_viz/_static',
       emptyOutDir: true,
