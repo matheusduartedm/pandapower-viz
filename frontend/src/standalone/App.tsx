@@ -3,6 +3,7 @@ import { NetworkDiagram } from '../components/NetworkDiagram';
 import { NetworkMap } from '../components/NetworkMap';
 import { parsePandaPowerJson, getNetworkStatistics, extractGeodata } from '../core/parser';
 import type { PandaPowerNetwork, ElementInfo } from '../core/types';
+import { WelcomeScreen } from './WelcomeScreen';
 import '../styles/variables.css';
 import '../styles/network-diagram.css';
 import '../styles/network-map.css';
@@ -39,59 +40,69 @@ function ElementPanel({ element, onClose }: { element: ElementInfo; onClose: () 
 
 export default function App() {
   const [network, setNetwork] = useState<PandaPowerNetwork | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [networkName, setNetworkName] = useState<string>('');
+  const [mode, setMode] = useState<'loading' | 'python' | 'static'>('loading');
   const [activeTab, setActiveTab] = useState<Tab>('diagram');
   const [selectedElement, setSelectedElement] = useState<ElementInfo | null>(null);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
+  // Detect mode: try /api/network. If it works → python mode, else → static mode.
   useEffect(() => {
     fetch('/api/network')
       .then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) throw new Error('no backend');
         return res.json();
       })
       .then(data => {
         const parsed = parsePandaPowerJson(data);
         setNetwork(parsed);
-        setLoading(false);
+        setNetworkName(parsed.name || 'Network');
+        setMode('python');
       })
-      .catch(err => {
-        setError(err.message);
-        setLoading(false);
+      .catch(() => {
+        setMode('static');
       });
+  }, []);
+
+  const handleNetworkLoaded = useCallback((net: PandaPowerNetwork, name: string) => {
+    setNetwork(net);
+    setNetworkName(name);
+    setActiveTab('diagram');
+    setSelectedElement(null);
+  }, []);
+
+  const handleChangeNetwork = useCallback(() => {
+    setNetwork(null);
+    setNetworkName('');
+    setSelectedElement(null);
+    setActiveTab('diagram');
   }, []);
 
   const handleElementSelect = useCallback((el: ElementInfo | null) => {
     setSelectedElement(el);
   }, []);
 
-  const hasGeodata = network ? extractGeodata(network).length > 0 : false;
-  const stats = network ? getNetworkStatistics(network) : null;
-
-  if (loading) {
+  // Loading state — brief, while detecting mode
+  if (mode === 'loading') {
     return (
       <div style={{
         height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: 'var(--ppviz-bg-primary)', color: 'var(--ppviz-text-secondary)',
         fontFamily: 'var(--ppviz-font-family)',
       }}>
-        Loading network...
+        <span style={{ fontSize: 13 }}>Loading...</span>
       </div>
     );
   }
 
-  if (error || !network) {
-    return (
-      <div style={{
-        height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'var(--ppviz-bg-primary)', color: '#ef4444',
-        fontFamily: 'var(--ppviz-font-family)',
-      }}>
-        {error || 'No network data available'}
-      </div>
-    );
+  // No network loaded → show welcome screen (static mode or python mode with no network)
+  if (!network) {
+    return <WelcomeScreen onNetworkLoaded={handleNetworkLoaded} />;
   }
+
+  // Visualizer
+  const hasGeodata = extractGeodata(network).length > 0;
+  const stats = getNetworkStatistics(network);
 
   return (
     <div style={{
@@ -106,13 +117,12 @@ export default function App() {
         background: 'var(--ppviz-bg-secondary)', fontSize: 13, flexShrink: 0,
       }}>
         <strong style={{ color: 'var(--ppviz-brand-accent)' }}>pandapower-viz</strong>
-        {network.name && <span style={{ color: 'var(--ppviz-text-secondary)' }}>{network.name}</span>}
-        {stats && (
-          <span style={{ color: 'var(--ppviz-text-muted)', marginLeft: 'auto' }}>
-            {stats['Buses']} buses &middot; {stats['Lines']} lines &middot; {stats['Transformers']} trafos
-          </span>
-        )}
-        <div style={{ display: 'flex', gap: 2, marginLeft: stats ? 12 : 'auto' }}>
+        <span style={{ color: 'var(--ppviz-text-secondary)' }}>{networkName}</span>
+        <span style={{ color: 'var(--ppviz-text-muted)' }}>
+          {stats['Buses']} buses &middot; {stats['Lines']} lines &middot; {stats['Transformers']} trafos
+        </span>
+
+        <div style={{ display: 'flex', gap: 2, marginLeft: 'auto' }}>
           <button
             onClick={() => setActiveTab('diagram')}
             style={{
@@ -136,6 +146,22 @@ export default function App() {
             </button>
           )}
         </div>
+
+        {/* Change network (only in static mode) */}
+        {mode === 'static' && (
+          <button
+            onClick={handleChangeNetwork}
+            title="Change network"
+            style={{
+              padding: '4px 10px', fontSize: 12, border: '1px solid var(--ppviz-border-color)',
+              borderRadius: 4, cursor: 'pointer', background: 'transparent',
+              color: 'var(--ppviz-text-secondary)',
+            }}
+          >
+            Change
+          </button>
+        )}
+
         <button
           onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
           style={{
