@@ -30,6 +30,21 @@ export default defineConfig(({ mode }) => {
     };
   }
 
+  if (mode === 'widget') {
+    // Widget build for Jupyter (anywidget) — no React, just vis-network + parser
+    return {
+      build: {
+        lib: {
+          entry: resolve(__dirname, 'src/widget-entry.ts'),
+          formats: ['es'],
+          fileName: () => 'widget.js',
+        },
+        outDir: '../pandapower_viz/_static',
+        emptyOutDir: false,
+      },
+    };
+  }
+
   // Default: standalone app build (for Python server / GitHub Pages)
   return {
     plugins: [react()],

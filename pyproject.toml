@@ -27,6 +27,8 @@ dependencies = [
     "fastapi>=0.100.0",
     "uvicorn[standard]>=0.20.0",
     "pandapower>=2.13.0",
+    "anywidget>=0.9.0",
+    "traitlets>=5.0.0",
 ]
 keywords = ["pandapower", "power-system", "visualization", "electrical-grid"]
 classifiers = [

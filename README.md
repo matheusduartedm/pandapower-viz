@@ -12,6 +12,7 @@ Interactive web visualizer for [pandapower](https://www.pandapower.org/) network
 - **Compact Mode** — Automatically simplifies large networks (>500 buses) for performance.
 - **Dark & Light Themes** — Full theme support via CSS custom properties.
 - **Dual Distribution** — Use from Python (`pip install`) or React (`npm install`).
+- **Jupyter Support** — Renders inline in notebook cells via anywidget.
 
 ## Python Usage
 
@@ -26,6 +27,33 @@ import pandapower_viz as pv
 net = pp.networks.case_ieee30()
 pp.runpp(net)
 pv.show(net)  # opens browser at localhost:8050
+```
+
+### Jupyter Notebook
+
+`pv.show(net)` auto-detects Jupyter and renders the diagram inline in the cell:
+
+```python
+# In a Jupyter notebook cell:
+import pandapower as pp
+import pandapower_viz as pv
+
+net = pp.networks.case_ieee30()
+pp.runpp(net)
+pv.show(net)  # renders inline — no browser tab opened
+```
+
+You can also use the widget directly for more control:
+
+```python
+from pandapower_viz import NetworkWidget
+
+w = NetworkWidget.from_net(net)
+display(w)
+
+# Update the network later:
+pp.runpp(net)
+w.update_network(net)
 ```
 
 ## React Usage
