@@ -5,9 +5,11 @@ import { parsePandaPowerJson } from '../core/parser';
 
 interface WelcomeScreenProps {
   onNetworkLoaded: (network: PandaPowerNetwork, name: string) => void;
+  theme: 'dark' | 'light';
+  onToggleTheme: () => void;
 }
 
-export function WelcomeScreen({ onNetworkLoaded }: WelcomeScreenProps) {
+export function WelcomeScreen({ onNetworkLoaded, theme, onToggleTheme }: WelcomeScreenProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -96,10 +98,24 @@ export function WelcomeScreen({ onNetworkLoaded }: WelcomeScreenProps) {
   return (
     <div style={{
       height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center',
-      justifyContent: 'center', background: 'var(--ppviz-bg-primary)',
+      justifyContent: 'center', position: 'relative', background: 'var(--ppviz-bg-primary)',
       fontFamily: 'var(--ppviz-font-family)', color: 'var(--ppviz-text-primary)',
       padding: 24,
     }}>
+      {/* Theme toggle (top right) */}
+      <button
+        onClick={onToggleTheme}
+        style={{
+          position: 'absolute', top: 16, right: 16,
+          background: 'none', border: '1px solid var(--ppviz-border-color)',
+          borderRadius: 6, padding: '6px 10px', cursor: 'pointer',
+          color: 'var(--ppviz-text-secondary)', fontSize: 14,
+        }}
+        title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+      >
+        {theme === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19'}
+      </button>
+
       {/* Title */}
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--ppviz-brand-accent)', marginBottom: 8 }}>

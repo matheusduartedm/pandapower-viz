@@ -1,4 +1,20 @@
-:root {
+/* Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+body {
+  margin: 0;
+  background: var(--ppviz-bg-primary);
+  color: var(--ppviz-text-primary);
+  font-family: var(--ppviz-font-family);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Dark theme (default) */
+:root,
+[data-ppviz-theme="dark"] {
   --ppviz-bg-primary: #1a1a1c;
   --ppviz-bg-secondary: #222224;
   --ppviz-bg-tertiary: #2a2a2d;
@@ -15,4 +31,20 @@
   --ppviz-radius-md: 6px;
   --ppviz-font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --ppviz-font-mono: 'JetBrains Mono', monospace;
+}
+
+/* Light theme */
+[data-ppviz-theme="light"] {
+  --ppviz-bg-primary: #ffffff;
+  --ppviz-bg-secondary: #f5f5f5;
+  --ppviz-bg-tertiary: #ebebeb;
+  --ppviz-bg-hover: #e0e0e0;
+  --ppviz-border-color: #d4d4d4;
+  --ppviz-border-subtle: #e5e5e5;
+  --ppviz-text-primary: #1a1a1a;
+  --ppviz-text-secondary: #525252;
+  --ppviz-text-muted: #a3a3a3;
+  --ppviz-brand-accent: #2a9d8f;
+  --ppviz-accent-fg: #ffffff;
+  --ppviz-network-bg: #fafafa;
 }

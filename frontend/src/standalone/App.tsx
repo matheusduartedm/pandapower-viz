@@ -46,6 +46,11 @@ export default function App() {
   const [selectedElement, setSelectedElement] = useState<ElementInfo | null>(null);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
+  // Apply theme attribute on root element for CSS variable switching
+  useEffect(() => {
+    document.documentElement.setAttribute('data-ppviz-theme', theme);
+  }, [theme]);
+
   // Detect mode: try /api/network. If it works → python mode, else → static mode.
   useEffect(() => {
     fetch('/api/network')
@@ -97,7 +102,13 @@ export default function App() {
 
   // No network loaded → show welcome screen (static mode or python mode with no network)
   if (!network) {
-    return <WelcomeScreen onNetworkLoaded={handleNetworkLoaded} />;
+    return (
+      <WelcomeScreen
+        onNetworkLoaded={handleNetworkLoaded}
+        theme={theme}
+        onToggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+      />
+    );
   }
 
   // Visualizer
