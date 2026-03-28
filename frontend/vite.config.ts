@@ -1,12 +1,13 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import dts from 'vite-plugin-dts';
 import { resolve } from 'path';
 
 export default defineConfig(({ mode }) => {
   if (mode === 'lib') {
     // Library build for npm consumers
     return {
-      plugins: [react()],
+      plugins: [react(), dts({ rollupTypes: true, tsconfigPath: './tsconfig.json' })],
       build: {
         lib: {
           entry: resolve(__dirname, 'src/index.ts'),
