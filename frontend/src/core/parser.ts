@@ -64,6 +64,11 @@ function getNetworkObject(data: Record<string, unknown>): Record<string, unknown
   return data;
 }
 
+/**
+ * Parse pandapower JSON data into a typed PandaPowerNetwork object.
+ * Handles both raw object format and pandapower's DataFrame serialization
+ * (columns/index/data), including nested _object wrappers.
+ */
 export function parsePandaPowerJson(jsonData: unknown): PandaPowerNetwork {
   const rawData = jsonData as Record<string, unknown>;
 
@@ -89,6 +94,11 @@ export function parsePandaPowerJson(jsonData: unknown): PandaPowerNetwork {
   return network;
 }
 
+/**
+ * Convert a pandapower network to vis-network nodes and edges (detailed mode).
+ * Creates individual nodes for loads, generators, storage, and transformer windings.
+ * Best for networks with fewer than ~500 buses.
+ */
 export function convertToVisNetwork(network: PandaPowerNetwork): {
   nodes: NetworkNode[];
   edges: NetworkEdge[];
@@ -510,6 +520,11 @@ function buildBusAnnotations(network: PandaPowerNetwork): Map<number, BusAnnotat
   return annotations;
 }
 
+/**
+ * Convert a pandapower network to vis-network nodes and edges (compact mode).
+ * Shows only bus nodes with color-coded equipment indicators.
+ * Recommended for large networks (>500 buses) for better performance.
+ */
 export function convertToVisNetworkCompact(network: PandaPowerNetwork): {
   nodes: NetworkNode[];
   edges: NetworkEdge[];
@@ -618,6 +633,7 @@ export function convertToVisNetworkCompact(network: PandaPowerNetwork): {
   return { nodes, edges, busAnnotations: annotations };
 }
 
+/** Get element info for a bus in compact mode, including aggregated load/generation totals. */
 export function getCompactBusInfo(
   busIndex: number,
   network: PandaPowerNetwork,
@@ -666,6 +682,7 @@ export function getCompactBusInfo(
   };
 }
 
+/** Get detailed properties for any selected node or edge in the network diagram. */
 export function getElementInfo(
   element: NetworkNode | NetworkEdge,
   network: PandaPowerNetwork
@@ -850,6 +867,7 @@ export function getElementInfo(
   }
 }
 
+/** Count all element types in the network (buses, lines, transformers, loads, etc.). */
 export function getNetworkStatistics(network: PandaPowerNetwork): Record<string, number> {
   // Count renewable types separately
   const sgens = Object.values(network.sgen);
@@ -872,6 +890,7 @@ export function getNetworkStatistics(network: PandaPowerNetwork): Record<string,
   };
 }
 
+/** Extract geographic coordinates from bus geo fields (WKT POINT format). */
 export function extractGeodata(network: PandaPowerNetwork): BusGeoData[] {
   const results: BusGeoData[] = [];
   for (const bus of Object.values(network.bus)) {

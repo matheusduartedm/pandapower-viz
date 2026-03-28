@@ -7,6 +7,11 @@ interface Position {
 
 type NodeId = number | string;
 
+/**
+ * Calculate hierarchical tree positions for network nodes.
+ * Uses external grid buses as roots and BFS traversal for depth assignment.
+ * Element nodes (loads, generators) are positioned around their parent bus.
+ */
 export function calculateTreeLayout(
   nodes: NetworkNode[],
   edges: NetworkEdge[],

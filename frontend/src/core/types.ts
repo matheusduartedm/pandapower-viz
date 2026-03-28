@@ -139,6 +139,7 @@ export interface PandaPowerResBus {
   q_mvar: number;
 }
 
+/** A complete pandapower network with all element tables and optional power flow results. */
 export interface PandaPowerNetwork {
   bus: Record<string, PandaPowerBus>;
   line: Record<string, PandaPowerLine>;
@@ -158,6 +159,7 @@ export interface PandaPowerNetwork {
   sn_mva?: number;
 }
 
+/** A vis-network node representing a bus or element in the network diagram. */
 export interface NetworkNode {
   id: number;
   label: string;
@@ -172,6 +174,7 @@ export interface NetworkNode {
   image?: string;
 }
 
+/** A vis-network edge representing a line, transformer, or switch connection. */
 export interface NetworkEdge {
   id: string;
   from: number;
@@ -185,6 +188,7 @@ export interface NetworkEdge {
   data: PandaPowerLine | PandaPowerTrafo | PandaPowerSwitch;
 }
 
+/** Detailed information about a selected network element, shown in the element panel. */
 export interface ElementInfo {
   type: string;
   id: number | string;
@@ -202,6 +206,7 @@ export interface BusAnnotation {
   genCount: number;
 }
 
+/** Geographic coordinates for a bus, extracted from pandapower's WKT POINT format. */
 export interface BusGeoData {
   bus: number;
   name: string;
@@ -247,9 +252,7 @@ export interface PowerFlowResults {
   trafo_results?: PowerFlowTrafoResult[];
 }
 
-// Simplified AnalysisResults for viz — only needs power_flow for coloring.
-// MWatt's full AnalysisResults (with connection_study, protection, etc.)
-// is structurally compatible since it also has power_flow.
+/** Analysis results used for visualization coloring (voltage/loading modes). */
 export interface VizAnalysisResults {
   power_flow: PowerFlowResults;
 }

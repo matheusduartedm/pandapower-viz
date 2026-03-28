@@ -4,7 +4,18 @@ import { DataSet } from 'vis-data';
 import type { PandaPowerNetwork, ElementInfo, BusAnnotation, VizAnalysisResults } from '../core/types';
 import { getElementInfo, getCompactBusInfo, convertToVisNetwork, convertToVisNetworkCompact } from '../core/parser';
 import { calculateTreeLayout } from '../core/layout';
+import { COLORS } from '../core/colors';
 
+/**
+ * Props for the NetworkDiagram component.
+ * @param network - The pandapower network to visualize.
+ * @param theme - Color theme ('dark' or 'light'). Default: 'dark'.
+ * @param onElementSelect - Callback when user clicks a node or edge. Receives null on deselect.
+ * @param analysisResults - Power flow results for voltage/loading color modes.
+ * @param compactThreshold - Bus count above which compact mode activates. Default: 500.
+ * @param className - Additional CSS class for the container.
+ * @param style - Additional inline styles for the container.
+ */
 export interface NetworkDiagramProps {
   network: PandaPowerNetwork;
   theme?: 'dark' | 'light';
@@ -177,11 +188,11 @@ export function NetworkDiagram({
           if (busResult) {
             const vm = busResult.vm_pu;
             if (vm >= 0.95 && vm <= 1.05) {
-              nodeBackgroundColor = '#4ade80';
+              nodeBackgroundColor = COLORS.ok;
             } else if ((vm >= 0.93 && vm < 0.95) || (vm > 1.05 && vm <= 1.07)) {
-              nodeBackgroundColor = '#fbbf24';
+              nodeBackgroundColor = COLORS.warn;
             } else {
-              nodeBackgroundColor = '#ef4444';
+              nodeBackgroundColor = COLORS.fail;
             }
           }
         }
@@ -196,8 +207,8 @@ export function NetworkDiagram({
           : {
               background: nodeBackgroundColor,
               border: nodeBackgroundColor,
-              highlight: { background: '#22d3ee', border: '#22d3ee' },
-              hover: { background: '#38bdf8', border: '#38bdf8' },
+              highlight: { background: COLORS.highlight, border: COLORS.highlight },
+              hover: { background: COLORS.hover, border: COLORS.hover },
             };
 
         return {
@@ -235,9 +246,9 @@ export function NetworkDiagram({
             const lineResult = analysisResults.power_flow.line_results?.find((l) => l.line === lineIndex);
             if (lineResult) {
               const loading = lineResult.loading_percent;
-              if (loading < 80) edgeColorValue = '#4ade80';
-              else if (loading <= 100) edgeColorValue = '#fbbf24';
-              else edgeColorValue = '#ef4444';
+              if (loading < 80) edgeColorValue = COLORS.ok;
+              else if (loading <= 100) edgeColorValue = COLORS.warn;
+              else edgeColorValue = COLORS.fail;
             }
           } else if (edgeId.startsWith('trafo_') && edgeId.includes('_hv')) {
             const match = edgeId.match(/^trafo_(\d+)_/);
@@ -260,7 +271,7 @@ export function NetworkDiagram({
           to: edge.to,
           label: edgeLabel,
           title: edge.title,
-          color: { color: edgeColorValue, highlight: '#22d3ee', hover: '#38bdf8' },
+          color: { color: edgeColorValue, highlight: COLORS.highlight, hover: COLORS.hover },
           width: edge.width,
           dashes: edge.dashes,
           smooth: false,
@@ -460,26 +471,26 @@ export function NetworkDiagram({
         <div className="ppviz-compact-mode-badge">
           <div className="ppviz-compact-mode-title">Compact view — {nodes.length.toLocaleString()} buses</div>
           <div className="ppviz-compact-mode-legend">
-            <span><i style={{ background: '#fbbf24' }} />Ext Grid</span>
-            <span><i style={{ background: '#2dd4bf' }} />Gen+Load</span>
-            <span><i style={{ background: '#4ade80' }} />Gen</span>
-            <span><i style={{ background: '#fb923c' }} />Load</span>
-            <span><i style={{ background: '#60a5fa' }} />Bus</span>
+            <span><i style={{ background: COLORS.ext_grid }} />Ext Grid</span>
+            <span><i style={{ background: COLORS.compact_gen_load }} />Gen+Load</span>
+            <span><i style={{ background: COLORS.compact_gen }} />Gen</span>
+            <span><i style={{ background: COLORS.compact_load }} />Load</span>
+            <span><i style={{ background: COLORS.bus }} />Bus</span>
           </div>
         </div>
       )}
       {colorMode === 'voltage' && (
         <div className="ppviz-diagram-legend">
-          <span><i style={{ background: '#4ade80' }} />0.95-1.05 pu</span>
-          <span><i style={{ background: '#fbbf24' }} />Warning</span>
-          <span><i style={{ background: '#ef4444' }} />Violation</span>
+          <span><i style={{ background: COLORS.ok }} />0.95-1.05 pu</span>
+          <span><i style={{ background: COLORS.warn }} />Warning</span>
+          <span><i style={{ background: COLORS.fail }} />Violation</span>
         </div>
       )}
       {colorMode === 'loading' && (
         <div className="ppviz-diagram-legend">
-          <span><i style={{ background: '#4ade80' }} />&lt;80%</span>
-          <span><i style={{ background: '#fbbf24' }} />80-100%</span>
-          <span><i style={{ background: '#ef4444' }} />&gt;100%</span>
+          <span><i style={{ background: COLORS.ok }} />&lt;80%</span>
+          <span><i style={{ background: COLORS.warn }} />80-100%</span>
+          <span><i style={{ background: COLORS.fail }} />&gt;100%</span>
         </div>
       )}
     </div>

@@ -23,7 +23,6 @@ export default defineConfig(({ mode }) => {
             },
           },
         },
-        cssFileName: 'style.css',
         outDir: 'dist',
         sourcemap: true,
       },

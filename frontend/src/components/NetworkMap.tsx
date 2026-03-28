@@ -4,6 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { PandaPowerNetwork, ElementInfo, BusGeoData, VizAnalysisResults } from '../core/types';
 import { extractGeodata } from '../core/parser';
+import { COLORS } from '../core/colors';
 
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -30,15 +31,25 @@ const createIcon = (color: string, size: number = 24) => {
 };
 
 const ICONS = {
-  bus: createIcon('#60a5fa', 20),
-  ext_grid: createIcon('#fbbf24', 28),
-  load: createIcon('#f87171', 16),
-  gen: createIcon('#facc15', 22),
-  solar: createIcon('#fbbf24', 20),
-  wind: createIcon('#38bdf8', 20),
-  storage: createIcon('#22c55e', 18),
+  bus: createIcon(COLORS.bus, 20),
+  ext_grid: createIcon(COLORS.ext_grid, 28),
+  load: createIcon(COLORS.load, 16),
+  gen: createIcon(COLORS.gen, 22),
+  solar: createIcon(COLORS.solar, 20),
+  wind: createIcon(COLORS.wind, 20),
+  storage: createIcon(COLORS.storage, 18),
 };
 
+/**
+ * Props for the NetworkMap component.
+ * @param network - The pandapower network to visualize on a map.
+ * @param theme - Color theme ('dark' or 'light'). Default: 'dark'.
+ * @param onElementSelect - Callback when user clicks a bus marker.
+ * @param analysisResults - Power flow results for voltage/loading color modes.
+ * @param noGeoDataMessage - Custom message when no geographic data is available.
+ * @param className - Additional CSS class for the container.
+ * @param style - Additional inline styles for the container.
+ */
 export interface NetworkMapProps {
   network: PandaPowerNetwork;
   theme?: 'dark' | 'light';
@@ -90,15 +101,15 @@ export function NetworkMap({
   }, [analysisResults]);
 
   const getVoltageColor = useCallback((vm_pu: number) => {
-    if (vm_pu >= 0.95 && vm_pu <= 1.05) return '#4ade80';
-    else if ((vm_pu >= 0.93 && vm_pu < 0.95) || (vm_pu > 1.05 && vm_pu <= 1.07)) return '#fbbf24';
-    else return '#ef4444';
+    if (vm_pu >= 0.95 && vm_pu <= 1.05) return COLORS.ok;
+    else if ((vm_pu >= 0.93 && vm_pu < 0.95) || (vm_pu > 1.05 && vm_pu <= 1.07)) return COLORS.warn;
+    else return COLORS.fail;
   }, []);
 
   const getLoadingColor = useCallback((loading: number) => {
-    if (loading > 100) return '#ef4444';
-    else if (loading >= 80) return '#fbbf24';
-    else return '#4ade80';
+    if (loading > 100) return COLORS.fail;
+    else if (loading >= 80) return COLORS.warn;
+    else return COLORS.ok;
   }, []);
 
   const getDrawableLines = useCallback(() => {
@@ -183,11 +194,11 @@ export function NetworkMap({
   const trafos = getDrawableTrafos();
 
   const getLineColor = (loading?: number) => {
-    if (loading === undefined) return '#94a3b8';
-    if (loading > 100) return '#ef4444';
-    if (loading > 80) return '#f97316';
-    if (loading > 50) return '#eab308';
-    return '#22c55e';
+    if (loading === undefined) return COLORS.line;
+    if (loading > 100) return COLORS.loading_overload;
+    if (loading > 80) return COLORS.loading_high;
+    if (loading > 50) return COLORS.loading_medium;
+    return COLORS.loading_low;
   };
 
   const getLineColorForMode = useCallback(
@@ -243,7 +254,7 @@ export function NetworkMap({
           <Polyline
             key={`trafo-${trafo.id}`}
             positions={[trafo.from, trafo.to]}
-            pathOptions={{ color: '#a78bfa', weight: 4, opacity: 0.9, dashArray: '10, 5' }}
+            pathOptions={{ color: COLORS.trafo, weight: 4, opacity: 0.9, dashArray: '10, 5' }}
           >
             <Popup>
               <strong>{trafo.name}</strong>
@@ -302,17 +313,17 @@ export function NetworkMap({
 
       <div className="ppviz-map-legend">
         <div className="ppviz-map-legend-title">Legend</div>
-        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-icon" style={{ backgroundColor: '#60a5fa' }}></span><span>Bus</span></div>
-        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-icon" style={{ backgroundColor: '#fbbf24' }}></span><span>External Grid</span></div>
-        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-icon" style={{ backgroundColor: '#facc15' }}></span><span>Generator</span></div>
-        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-icon" style={{ backgroundColor: '#f87171' }}></span><span>Load</span></div>
-        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-icon" style={{ backgroundColor: '#38bdf8' }}></span><span>Wind</span></div>
-        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-icon" style={{ backgroundColor: '#22c55e' }}></span><span>Storage</span></div>
+        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-icon" style={{ backgroundColor: COLORS.bus }}></span><span>Bus</span></div>
+        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-icon" style={{ backgroundColor: COLORS.ext_grid }}></span><span>External Grid</span></div>
+        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-icon" style={{ backgroundColor: COLORS.gen }}></span><span>Generator</span></div>
+        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-icon" style={{ backgroundColor: COLORS.load }}></span><span>Load</span></div>
+        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-icon" style={{ backgroundColor: COLORS.wind }}></span><span>Wind</span></div>
+        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-icon" style={{ backgroundColor: COLORS.storage }}></span><span>Storage</span></div>
         <div className="ppviz-map-legend-separator"></div>
-        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-line" style={{ backgroundColor: '#22c55e' }}></span><span>&lt;50% loading</span></div>
-        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-line" style={{ backgroundColor: '#eab308' }}></span><span>50-80% loading</span></div>
-        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-line" style={{ backgroundColor: '#f97316' }}></span><span>80-100% loading</span></div>
-        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-line" style={{ backgroundColor: '#ef4444' }}></span><span>&gt;100% overloaded</span></div>
+        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-line" style={{ backgroundColor: COLORS.loading_low }}></span><span>&lt;50% loading</span></div>
+        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-line" style={{ backgroundColor: COLORS.loading_medium }}></span><span>50-80% loading</span></div>
+        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-line" style={{ backgroundColor: COLORS.loading_high }}></span><span>80-100% loading</span></div>
+        <div className="ppviz-map-legend-item"><span className="ppviz-map-legend-line" style={{ backgroundColor: COLORS.loading_overload }}></span><span>&gt;100% overloaded</span></div>
       </div>
     </div>
   );
