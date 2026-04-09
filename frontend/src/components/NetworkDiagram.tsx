@@ -107,7 +107,7 @@ export function NetworkDiagram({
       : calculateTreeLayout(nodes, edges, layoutW, layoutH);
     const adjustedPositions = new Map(nodePositions);
 
-    if (!isCompactMode) {
+    if (!isCompactMode && !hasGeo) {
       const trafoLinks = new Map<string, { hv?: NodeId; lv?: NodeId; w1?: NodeId; w2?: NodeId }>();
 
       edges.forEach((edge) => {

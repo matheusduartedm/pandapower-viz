@@ -321,6 +321,9 @@ export function calculateGeoLayout(
 
   elementNodes.forEach(node => {
     const nodeId = String(node.id);
+    // Trafo windings already positioned by trafoLinks above
+    if (nodeId.startsWith('trafo_')) return;
+
     let busId: NodeId | null = null;
     const connEdge = elementEdgeMap.get(nodeId);
     if (connEdge) {
