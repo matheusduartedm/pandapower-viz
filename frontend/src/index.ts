@@ -14,8 +14,10 @@ export {
   getNetworkStatistics,
   extractGeodata,
 } from './core/parser';
-export { calculateTreeLayout } from './core/layout';
+export { calculateTreeLayout, calculateGeoLayout } from './core/layout';
+export { isElementNode, isBusNode } from './core/types';
 export { COLORS } from './core/colors';
+export { SYMBOLS } from './core/symbols';
 
 // Types
 export type {
@@ -32,6 +34,7 @@ export type {
   PandaPowerResLine,
   PandaPowerResBus,
   NetworkNode,
+  NetworkNodeType,
   NetworkEdge,
   ElementInfo,
   BusAnnotation,
