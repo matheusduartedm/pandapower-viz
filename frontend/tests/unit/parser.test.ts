@@ -274,7 +274,7 @@ describe('convertToVisNetwork', () => {
     const { nodes } = convertToVisNetwork(networkWithLoad);
     const loadNode = nodes.find((n) => String(n.id) === 'load_0');
     expect(loadNode).toBeDefined();
-    expect(loadNode!.shape).toBe('triangleDown');
+    expect(loadNode!.shape).toBe('image');
   });
 
   it('gives sgen with type PV the solar color (#fbbf24)', () => {
