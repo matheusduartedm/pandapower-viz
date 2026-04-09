@@ -162,9 +162,9 @@ export interface PandaPowerNetwork {
 /** Element type for vis-network nodes. */
 export type NetworkNodeType = 'bus' | 'ext_grid' | 'load' | 'sgen' | 'gen' | 'storage' | 'trafo';
 
-const ELEMENT_PREFIXES = ['load_', 'sgen_', 'gen_', 'storage_'] as const;
+const ELEMENT_PREFIXES = ['load_', 'sgen_', 'gen_', 'storage_', 'trafo_'] as const;
 
-/** Returns true if the node ID belongs to an element (load, sgen, gen, storage). */
+/** Returns true if the node ID belongs to an element (load, sgen, gen, storage, trafo). */
 export function isElementNode(id: number | string): boolean {
   const s = String(id);
   return ELEMENT_PREFIXES.some(p => s.startsWith(p));

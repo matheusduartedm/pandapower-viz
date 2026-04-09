@@ -184,7 +184,7 @@ export function NetworkDiagram({
         }
 
         let nodeBackgroundColor = node.color;
-        if (colorMode === 'voltage' && analysisResults?.power_flow?.bus_results && !isLoad && !isSgen && !isGen && !isTrafo) {
+        if (colorMode === 'voltage' && analysisResults?.power_flow?.bus_results && isBusNode(node.id)) {
           const busIndex = typeof node.id === 'number' ? node.id : parseInt(String(node.id), 10);
           const busResult = analysisResults.power_flow.bus_results.find((b) => b.bus === busIndex);
           if (busResult) {
@@ -398,7 +398,7 @@ export function NetworkDiagram({
             const currentPos = positions[nId];
             if (currentPos) {
               nodesDataSet.update({
-                id: otherId as unknown as number,
+                id: otherId,
                 x: currentPos.x + dragOffset.dx,
                 y: currentPos.y + dragOffset.dy,
               });
