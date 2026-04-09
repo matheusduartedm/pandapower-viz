@@ -41,6 +41,9 @@ export function NetworkDiagram({
 }: NetworkDiagramProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const networkRef = useRef<Network | null>(null);
+  const nodesDataSetRef = useRef<DataSet<Record<string, unknown>> | null>(null);
+  const edgesDataSetRef = useRef<DataSet<Record<string, unknown>> | null>(null);
+  const handleClickRef = useRef<(params: { nodes: NodeId[]; edges: string[] }) => void>(() => {});
 
   // Internalize conversion
   const busCount = Object.keys(network.bus).length;
@@ -58,14 +61,9 @@ export function NetworkDiagram({
   const busAnnotations = 'busAnnotations' in visData ? visData.busAnnotations : new Map<number, BusAnnotation>();
 
   const [physicsEnabled, setPhysicsEnabled] = useState(false);
-  const nodeSize = 10;
+  const nodeSize = 7;
   const [showLabels, setShowLabels] = useState(!isCompactMode);
   const [colorMode, setColorMode] = useState<'type' | 'voltage' | 'loading'>('type');
-
-  const labelColors = {
-    node: theme === 'dark' ? '#e5e5e5' : '#333333',
-    edge: theme === 'dark' ? '#a1a1aa' : '#666666',
-  };
 
   const handleClick = useCallback(
     (params: { nodes: NodeId[]; edges: string[] }) => {
@@ -94,10 +92,131 @@ export function NetworkDiagram({
   );
 
   const hasGeo = useMemo(() => Object.values(network.bus).some(b => b.geo), [network]);
-  const bgStrokeColor = theme === 'dark' ? '#1a1a1c' : '#ffffff';
 
+  // Keep click handler ref in sync so the creation effect's listener always calls the latest
+  handleClickRef.current = handleClick;
+
+  // Helper: compute visual properties for a node
+  const computeNodeAppearance = useCallback(
+    (node: typeof nodes[0], labels: boolean, mode: typeof colorMode, results: typeof analysisResults, currentTheme: typeof theme) => {
+      const nodeId = String(node.id);
+      const isTrafoWinding = /^trafo_\d+_(w1|w2)$/.test(nodeId);
+      const bgStroke = currentTheme === 'dark' ? '#1a1a1c' : '#ffffff';
+      const labelColor = currentTheme === 'dark' ? '#e5e5e5' : '#333333';
+
+      let nodeBackgroundColor = node.color;
+      if (mode === 'voltage' && results?.power_flow?.bus_results && isBusNode(node.id)) {
+        const busIndex = typeof node.id === 'number' ? node.id : parseInt(String(node.id), 10);
+        const busResult = results.power_flow.bus_results.find((b) => b.bus === busIndex);
+        if (busResult) {
+          const vm = busResult.vm_pu;
+          if (vm >= 0.95 && vm <= 1.05) nodeBackgroundColor = COLORS.ok;
+          else if ((vm >= 0.93 && vm < 0.95) || (vm > 1.05 && vm <= 1.07)) nodeBackgroundColor = COLORS.warn;
+          else nodeBackgroundColor = COLORS.fail;
+        }
+      }
+
+      let nodeImage = node.image;
+      if (nodeImage && nodeBackgroundColor !== node.color) {
+        switch (node.type) {
+          case 'ext_grid': nodeImage = extGridSvg(nodeBackgroundColor); break;
+          case 'load': nodeImage = loadSvg(nodeBackgroundColor); break;
+          case 'gen': nodeImage = generatorSvg(nodeBackgroundColor); break;
+          case 'sgen': nodeImage = sgenSvg(nodeBackgroundColor); break;
+          case 'storage': nodeImage = storageSvg(nodeBackgroundColor); break;
+          case 'trafo': nodeImage = transformerWindingSvg(nodeBackgroundColor); break;
+        }
+      }
+
+      const isImageNode = node.shape === 'image';
+      const nodeColor = isImageNode
+        ? {
+            background: 'transparent',
+            border: 'transparent',
+            highlight: { background: 'transparent', border: COLORS.highlight },
+            hover: { background: 'transparent', border: COLORS.hover },
+          }
+        : isTrafoWinding
+          ? {
+              background: 'transparent',
+              border: node.color,
+              highlight: { background: 'rgba(255,255,255,0.1)', border: '#ffffff' },
+              hover: { background: 'rgba(255,255,255,0.05)', border: '#e5e5e5' },
+            }
+          : {
+              background: nodeBackgroundColor,
+              border: nodeBackgroundColor,
+              highlight: { background: COLORS.highlight, border: COLORS.highlight },
+              hover: { background: COLORS.hover, border: COLORS.hover },
+            };
+
+      return {
+        label: labels ? node.label : '',
+        color: nodeColor,
+        image: nodeImage,
+        font: { size: 14, color: labelColor, strokeWidth: 3, strokeColor: bgStroke, align: 'center' },
+      };
+    },
+    []
+  );
+
+  // Helper: compute visual properties for an edge
+  const computeEdgeAppearance = useCallback(
+    (edge: typeof edges[0], labels: boolean, mode: typeof colorMode, results: typeof analysisResults, currentTheme: typeof theme) => {
+      const edgeId = String(edge.id);
+      const isConnection = edgeId.includes('_conn_');
+      const isTrafoEdge = edgeId.startsWith('trafo_');
+      const isSwitch = edgeId.startsWith('switch_');
+      const bgStroke = currentTheme === 'dark' ? '#1a1a1c' : '#ffffff';
+      const edgeLabelColor = currentTheme === 'dark' ? '#a1a1aa' : '#666666';
+
+      let edgeLabel = '';
+      if (labels && !isConnection && !isTrafoEdge && !(isSwitch && edgeId.endsWith('_a'))) {
+        edgeLabel = edge.label;
+      }
+
+      let edgeColorValue = edge.color.color;
+      if (mode === 'loading' && results?.power_flow) {
+        if (edgeId.startsWith('line_')) {
+          const lineIndex = parseInt(edgeId.replace('line_', ''), 10);
+          const lineResult = results.power_flow.line_results?.find((l) => l.line === lineIndex);
+          if (lineResult) {
+            const loading = lineResult.loading_percent;
+            if (loading < 80) edgeColorValue = COLORS.ok;
+            else if (loading <= 100) edgeColorValue = COLORS.warn;
+            else edgeColorValue = COLORS.fail;
+          }
+        } else if (edgeId.startsWith('trafo_') && edgeId.includes('_hv')) {
+          const match = edgeId.match(/^trafo_(\d+)_/);
+          if (match) {
+            const trafoIndex = parseInt(match[1], 10);
+            const trafoResult = results.power_flow.trafo_results?.find((t) => t.trafo === trafoIndex);
+            if (trafoResult) {
+              const loading = trafoResult.loading_percent;
+              if (loading < 80) edgeColorValue = '#4ade80';
+              else if (loading <= 100) edgeColorValue = '#fbbf24';
+              else edgeColorValue = '#ef4444';
+            }
+          }
+        }
+      }
+
+      return {
+        label: edgeLabel,
+        color: { color: edgeColorValue, highlight: COLORS.highlight, hover: COLORS.hover },
+        font: { size: 12, color: edgeLabelColor, strokeWidth: 2, strokeColor: bgStroke, align: 'middle' as const },
+      };
+    },
+    []
+  );
+
+  // Effect 1: Create vis-network instance (only when network data changes)
   useEffect(() => {
     if (!containerRef.current) return;
+
+    const bgStrokeColor = theme === 'dark' ? '#1a1a1c' : '#ffffff';
+    const nodeLabelColor = theme === 'dark' ? '#e5e5e5' : '#333333';
+    const edgeLabelColor = theme === 'dark' ? '#a1a1aa' : '#666666';
 
     const layoutBusCount = nodes.filter((n) => isBusNode(n.id)).length;
     const layoutW = isCompactMode ? Math.max(5000, layoutBusCount * 4) : 5000;
@@ -162,175 +281,69 @@ export function NetworkDiagram({
         const isSgen = nodeId.startsWith('sgen_');
         const isGen = nodeId.startsWith('gen_');
         const isTrafo = nodeId.startsWith('trafo_');
-        const isTrafoWinding = /^trafo_\d+_(w1|w2)$/.test(nodeId);
 
         let size = nodeSize;
-        const shape = node.shape;
-        const borderWidth = node.borderWidth;
-        const fontConfig: Record<string, unknown> = {
-          size: 14,
-          color: labelColors.node,
-          strokeWidth: 3,
-          strokeColor: bgStrokeColor,
-          align: 'center',
-        };
+        if (node.type === 'ext_grid') size = nodeSize * 1.2;
+        else if (isLoad || isSgen || isGen) size = nodeSize * 0.7;
+        else if (isTrafo) size = nodeSize * 0.8;
 
-        if (node.type === 'ext_grid') {
-          size = nodeSize * 1.2;
-        } else if (isLoad || isSgen || isGen) {
-          size = nodeSize * 0.7;
-        } else if (isTrafo) {
-          size = nodeSize * 0.8;
-        }
-
-        let nodeBackgroundColor = node.color;
-        if (colorMode === 'voltage' && analysisResults?.power_flow?.bus_results && isBusNode(node.id)) {
-          const busIndex = typeof node.id === 'number' ? node.id : parseInt(String(node.id), 10);
-          const busResult = analysisResults.power_flow.bus_results.find((b) => b.bus === busIndex);
-          if (busResult) {
-            const vm = busResult.vm_pu;
-            if (vm >= 0.95 && vm <= 1.05) {
-              nodeBackgroundColor = COLORS.ok;
-            } else if ((vm >= 0.93 && vm < 0.95) || (vm > 1.05 && vm <= 1.07)) {
-              nodeBackgroundColor = COLORS.warn;
-            } else {
-              nodeBackgroundColor = COLORS.fail;
-            }
-          }
-        }
-
-        let nodeImage = node.image;
-        if (nodeImage && nodeBackgroundColor !== node.color) {
-          switch (node.type) {
-            case 'ext_grid': nodeImage = extGridSvg(nodeBackgroundColor); break;
-            case 'load': nodeImage = loadSvg(nodeBackgroundColor); break;
-            case 'gen': nodeImage = generatorSvg(nodeBackgroundColor); break;
-            case 'sgen': nodeImage = sgenSvg(nodeBackgroundColor); break;
-            case 'storage': nodeImage = storageSvg(nodeBackgroundColor); break;
-            case 'trafo': nodeImage = transformerWindingSvg(nodeBackgroundColor); break;
-          }
-        }
-
-        const isImageNode = shape === 'image';
-        const nodeColor = isImageNode
-          ? {
-              background: 'transparent',
-              border: 'transparent',
-              highlight: { background: 'transparent', border: COLORS.highlight },
-              hover: { background: 'transparent', border: COLORS.hover },
-            }
-          : isTrafoWinding
-            ? {
-                background: 'transparent',
-                border: node.color,
-                highlight: { background: 'rgba(255,255,255,0.1)', border: '#ffffff' },
-                hover: { background: 'rgba(255,255,255,0.05)', border: '#e5e5e5' },
-              }
-            : {
-                background: nodeBackgroundColor,
-                border: nodeBackgroundColor,
-                highlight: { background: COLORS.highlight, border: COLORS.highlight },
-                hover: { background: COLORS.hover, border: COLORS.hover },
-              };
+        const appearance = computeNodeAppearance(node, showLabels, colorMode, analysisResults, theme);
 
         return {
           id: node.id,
-          label: showLabels ? node.label : '',
           title: node.title,
           x: pos?.x,
           y: pos?.y,
-          color: nodeColor,
-          shape: shape,
+          shape: node.shape,
           size: size,
-          borderWidth: borderWidth,
-          font: fontConfig,
-          image: nodeImage,
+          borderWidth: node.borderWidth,
+          ...appearance,
         };
       })
     );
 
     const edgesDataSet = new DataSet(
       edges.map((edge) => {
-        const edgeId = String(edge.id);
-        const isConnection = edgeId.includes('_conn_');
-        const isTrafoEdge = edgeId.startsWith('trafo_');
-        const isSwitch = edgeId.startsWith('switch_');
-
-        let edgeLabel = '';
-        if (showLabels && !isConnection && !isTrafoEdge && !(isSwitch && edgeId.endsWith('_a'))) {
-          edgeLabel = edge.label;
-        }
-
-        let edgeColorValue = edge.color.color;
-        if (colorMode === 'loading' && analysisResults?.power_flow) {
-          if (edgeId.startsWith('line_')) {
-            const lineIndex = parseInt(edgeId.replace('line_', ''), 10);
-            const lineResult = analysisResults.power_flow.line_results?.find((l) => l.line === lineIndex);
-            if (lineResult) {
-              const loading = lineResult.loading_percent;
-              if (loading < 80) edgeColorValue = COLORS.ok;
-              else if (loading <= 100) edgeColorValue = COLORS.warn;
-              else edgeColorValue = COLORS.fail;
-            }
-          } else if (edgeId.startsWith('trafo_') && edgeId.includes('_hv')) {
-            const match = edgeId.match(/^trafo_(\d+)_/);
-            if (match) {
-              const trafoIndex = parseInt(match[1], 10);
-              const trafoResult = analysisResults.power_flow.trafo_results?.find((t) => t.trafo === trafoIndex);
-              if (trafoResult) {
-                const loading = trafoResult.loading_percent;
-                if (loading < 80) edgeColorValue = '#4ade80';
-                else if (loading <= 100) edgeColorValue = '#fbbf24';
-                else edgeColorValue = '#ef4444';
-              }
-            }
-          }
-        }
-
+        const appearance = computeEdgeAppearance(edge, showLabels, colorMode, analysisResults, theme);
         return {
           id: edge.id,
           from: edge.from,
           to: edge.to,
-          label: edgeLabel,
           title: edge.title,
-          color: { color: edgeColorValue, highlight: COLORS.highlight, hover: COLORS.hover },
           width: edge.width,
           dashes: edge.dashes,
           smooth: false,
-          font: {
-            size: 12,
-            color: labelColors.edge,
-            strokeWidth: 2,
-            strokeColor: bgStrokeColor,
-            align: 'middle' as const,
-          },
+          ...appearance,
         };
       })
     );
+
+    nodesDataSetRef.current = nodesDataSet;
+    edgesDataSetRef.current = edgesDataSet;
 
     const options: Options = {
       nodes: {
         font: {
           size: isCompactMode ? 0 : 14,
-          color: labelColors.node,
+          color: nodeLabelColor,
           strokeWidth: 3,
           strokeColor: bgStrokeColor,
         },
-        scaling: { label: { drawThreshold: 0 } },
+        scaling: { label: { drawThreshold: 0, maxVisible: 24 } },
       },
       edges: {
         font: {
           size: isCompactMode ? 0 : 12,
           align: 'middle',
-          color: labelColors.edge,
+          color: edgeLabelColor,
           strokeWidth: 2,
           strokeColor: bgStrokeColor,
         },
-        scaling: { label: { drawThreshold: 0 } },
+        scaling: { label: { drawThreshold: 0, maxVisible: 24 } },
         smooth: false,
         arrows: { to: { enabled: false }, from: { enabled: false } },
-        selectionWidth: 2,
-        hoverWidth: isCompactMode ? 0 : 2,
+        selectionWidth: ((w: number) => w * 1.5) as unknown as number,
+        hoverWidth: (isCompactMode ? 0 : ((w: number) => w * 1.3)) as unknown as number,
       },
       layout: { improvedLayout: false, hierarchical: false },
       physics: {
@@ -350,7 +363,6 @@ export function NetworkDiagram({
         tooltipDelay: 100,
         hideEdgesOnDrag: isCompactMode,
         hideEdgesOnZoom: isCompactMode,
-        navigationButtons: true,
         keyboard: { enabled: true, bindToWindow: false },
         zoomView: true,
         dragView: true,
@@ -361,7 +373,9 @@ export function NetworkDiagram({
 
     const networkInstance = new Network(containerRef.current, { nodes: nodesDataSet, edges: edgesDataSet }, options);
     networkRef.current = networkInstance;
-    networkInstance.on('click', handleClick);
+
+    // Use ref so handler always calls the latest version without rebinding
+    networkInstance.on('click', (params: { nodes: NodeId[]; edges: string[] }) => handleClickRef.current(params));
 
     if (!isCompactMode) {
       let draggedTrafoId: string | null = null;
@@ -419,13 +433,113 @@ export function NetworkDiagram({
       } catch {
         /* instance may be destroyed */
       }
+
+      // Zoom compensation: keep nodes/labels/edges from growing too large.
+      // Store base sizes at creation, then scale them inversely when zoom exceeds threshold.
+      try {
+        const baseScale = networkInstance.getScale();
+        const maxScale = baseScale * 3;
+        let lastCompensation = 1;
+
+        // Capture base sizes for every node and edge
+        const nodeBaseSizes = new Map<string | number, number>();
+        const edgeBaseWidths = new Map<string, number>();
+        nodesDataSet.forEach((item: { id: string | number; size?: number }) => {
+          nodeBaseSizes.set(item.id, item.size || nodeSize);
+        });
+        edgesDataSet.forEach((item: { id: string; width?: number }) => {
+          edgeBaseWidths.set(item.id, item.width || 1);
+        });
+
+        networkInstance.on('zoom', () => {
+          const scale = networkInstance.getScale();
+          const compensation = scale > maxScale ? maxScale / scale : 1;
+
+          // Only update when compensation changes meaningfully
+          if (Math.abs(compensation - lastCompensation) < 0.05) return;
+          lastCompensation = compensation;
+
+          const nodeUpdates: Record<string, unknown>[] = [];
+          nodesDataSet.forEach((item: { id: string | number }) => {
+            const base = nodeBaseSizes.get(item.id) || nodeSize;
+            nodeUpdates.push({
+              id: item.id,
+              size: base * compensation,
+              font: { size: 14 * compensation },
+            });
+          });
+          nodesDataSet.update(nodeUpdates);
+
+          const edgeUpdates: Record<string, unknown>[] = [];
+          edgesDataSet.forEach((item: { id: string }) => {
+            const baseW = edgeBaseWidths.get(item.id) || 1;
+            edgeUpdates.push({
+              id: item.id,
+              width: baseW * compensation,
+              font: { size: 12 * compensation },
+            });
+          });
+          edgesDataSet.update(edgeUpdates);
+        });
+      } catch {
+        /* instance may be destroyed */
+      }
     }, 100);
 
     return () => {
       networkInstance.destroy();
       networkRef.current = null;
+      nodesDataSetRef.current = null;
+      edgesDataSetRef.current = null;
     };
-  }, [nodes, edges, network, handleClick, physicsEnabled, showLabels, theme, labelColors.node, labelColors.edge, isCompactMode, colorMode, analysisResults]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, edges, network, isCompactMode, hasGeo]);
+
+  // Effect 2: Update appearance in-place (labels, colors, theme) — preserves zoom/pan
+  useEffect(() => {
+    const nodesDS = nodesDataSetRef.current;
+    const edgesDS = edgesDataSetRef.current;
+    const net = networkRef.current;
+    if (!nodesDS || !edgesDS || !net) return;
+
+    const bgStrokeColor = theme === 'dark' ? '#1a1a1c' : '#ffffff';
+    const nodeLabelColor = theme === 'dark' ? '#e5e5e5' : '#333333';
+    const edgeLabelColor = theme === 'dark' ? '#a1a1aa' : '#666666';
+
+    // Update node appearances
+    const nodeUpdates = nodes.map((node) => ({
+      id: node.id,
+      ...computeNodeAppearance(node, showLabels, colorMode, analysisResults, theme),
+    }));
+    nodesDS.update(nodeUpdates);
+
+    // Update edge appearances
+    const edgeUpdates = edges.map((edge) => ({
+      id: edge.id,
+      ...computeEdgeAppearance(edge, showLabels, colorMode, analysisResults, theme),
+    }));
+    edgesDS.update(edgeUpdates);
+
+    // Update global font options for theme
+    if (typeof net.setOptions === 'function') {
+      net.setOptions({
+        nodes: {
+          font: { color: nodeLabelColor, strokeColor: bgStrokeColor },
+        },
+        edges: {
+          font: { color: edgeLabelColor, strokeColor: bgStrokeColor },
+        },
+      });
+    }
+  }, [nodes, edges, showLabels, colorMode, analysisResults, theme, computeNodeAppearance, computeEdgeAppearance]);
+
+  // Effect 3: Toggle physics without recreating the network
+  useEffect(() => {
+    const net = networkRef.current;
+    if (net && typeof net.setOptions === 'function') {
+      net.setOptions({ physics: { enabled: physicsEnabled } });
+    }
+  }, [physicsEnabled]);
 
   const handleFit = useCallback(() => {
     networkRef.current?.fit({ animation: true });
