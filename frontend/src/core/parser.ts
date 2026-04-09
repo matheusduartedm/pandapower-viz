@@ -14,6 +14,7 @@ import type {
 } from './types';
 
 import { COLORS } from './colors';
+import { extGridSvg, loadSvg, generatorSvg, sgenSolarSvg, sgenWindSvg, sgenSvg, storageSvg, transformerWindingSvg } from './symbols';
 
 function parseDataFrameFromObject<T>(data: unknown): Record<string, T> {
   if (!data || typeof data !== 'object') {
@@ -123,17 +124,19 @@ export function convertToVisNetwork(network: PandaPowerNetwork): {
       Type: ${bus.type || 'N/A'}
     `;
 
+    const busColor = isExtGrid ? COLORS.ext_grid : COLORS.bus;
     nodes.push({
       id: busIndex,
       label: String(busIndex),
       title: title,
-      color: isExtGrid ? COLORS.ext_grid : COLORS.bus,
-      shape: 'dot',
+      color: busColor,
+      shape: isExtGrid ? 'image' : 'dot',
       size: isExtGrid ? 10 : 6,
-      borderWidth: isExtGrid ? 3 : 1,
+      borderWidth: isExtGrid ? 0 : 1,
       font: { color: '#e5e5e5' },
       type: isExtGrid ? 'ext_grid' : 'bus',
-      data: bus
+      data: bus,
+      image: isExtGrid ? extGridSvg(busColor) : undefined,
     });
   });
 
@@ -150,22 +153,23 @@ export function convertToVisNetwork(network: PandaPowerNetwork): {
     `;
 
     nodes.push({
-      id: `load_${loadIndex}` as unknown as number,
+      id: `load_${loadIndex}`,
       label: String(loadIndex),
       title: title,
       color: COLORS.load,
-      shape: 'triangleDown',
-      size: 5,
-      borderWidth: 1,
+      shape: 'image',
+      size: 10,
+      borderWidth: 0,
       font: { color: '#e5e5e5' },
-      type: 'bus',
-      data: load as unknown as PandaPowerBus
+      type: 'load',
+      data: load as unknown as PandaPowerBus,
+      image: loadSvg(COLORS.load),
     });
 
     edges.push({
       id: `load_conn_${loadIndex}`,
       from: load.bus,
-      to: `load_${loadIndex}` as unknown as number,
+      to: `load_${loadIndex}`,
       label: '',
       title: '',
       color: { color: COLORS.load, highlight: COLORS.load },
@@ -202,23 +206,33 @@ export function convertToVisNetwork(network: PandaPowerNetwork): {
       ${sgen.name ? `<br/>Name: ${sgen.name}` : ''}
     `;
 
+    let sgenImage: string;
+    if (sgenType === 'PV') {
+      sgenImage = sgenSolarSvg(nodeColor);
+    } else if (sgenType === 'WP') {
+      sgenImage = sgenWindSvg(nodeColor);
+    } else {
+      sgenImage = sgenSvg(nodeColor);
+    }
+
     nodes.push({
-      id: `sgen_${sgenIndex}` as unknown as number,
+      id: `sgen_${sgenIndex}`,
       label: String(sgenIndex),
       title: title,
       color: nodeColor,
-      shape: 'triangle',
-      size: 5,
-      borderWidth: 1,
+      shape: 'image',
+      size: 10,
+      borderWidth: 0,
       font: { color: '#e5e5e5' },
-      type: 'bus',
-      data: sgen as unknown as PandaPowerBus
+      type: 'sgen',
+      data: sgen as unknown as PandaPowerBus,
+      image: sgenImage,
     });
 
     edges.push({
       id: `sgen_conn_${sgenIndex}`,
       from: sgen.bus,
-      to: `sgen_${sgenIndex}` as unknown as number,
+      to: `sgen_${sgenIndex}`,
       label: '',
       title: '',
       color: { color: nodeColor, highlight: nodeColor },
@@ -242,22 +256,23 @@ export function convertToVisNetwork(network: PandaPowerNetwork): {
     `;
 
     nodes.push({
-      id: `gen_${genIndex}` as unknown as number,
+      id: `gen_${genIndex}`,
       label: String(genIndex),
       title: title,
       color: COLORS.gen,
-      shape: 'diamond',
-      size: 6,
-      borderWidth: 1,
+      shape: 'image',
+      size: 12,
+      borderWidth: 0,
       font: { color: '#e5e5e5' },
-      type: 'bus',
-      data: gen as unknown as PandaPowerBus
+      type: 'gen',
+      data: gen as unknown as PandaPowerBus,
+      image: generatorSvg(COLORS.gen),
     });
 
     edges.push({
       id: `gen_conn_${genIndex}`,
       from: gen.bus,
-      to: `gen_${genIndex}` as unknown as number,
+      to: `gen_${genIndex}`,
       label: '',
       title: '',
       color: { color: COLORS.gen, highlight: COLORS.gen },
@@ -286,22 +301,23 @@ export function convertToVisNetwork(network: PandaPowerNetwork): {
     `;
 
     nodes.push({
-      id: `storage_${storageIndex}` as unknown as number,
+      id: `storage_${storageIndex}`,
       label: String(storageIndex),
       title: title,
       color: COLORS.storage,
-      shape: 'square',
-      size: 6,
-      borderWidth: 2,
+      shape: 'image',
+      size: 10,
+      borderWidth: 0,
       font: { color: '#e5e5e5' },
-      type: 'bus',
-      data: storage as unknown as PandaPowerBus
+      type: 'storage',
+      data: storage as unknown as PandaPowerBus,
+      image: storageSvg(COLORS.storage),
     });
 
     edges.push({
       id: `storage_conn_${storageIndex}`,
       from: storage.bus,
-      to: `storage_${storageIndex}` as unknown as number,
+      to: `storage_${storageIndex}`,
       label: '',
       title: '',
       color: { color: COLORS.storage, highlight: COLORS.storage },
@@ -372,35 +388,37 @@ export function convertToVisNetwork(network: PandaPowerNetwork): {
     const w2Id = `trafo_${trafoIndex}_w2`;
 
     nodes.push({
-      id: w1Id as unknown as number,
+      id: w1Id,
       label: '',
       title: title,
       color: COLORS.trafo,
-      shape: 'circle',
-      size: 6,
-      borderWidth: 2,
+      shape: 'image',
+      size: 10,
+      borderWidth: 0,
       font: { color: '#e5e5e5' },
-      type: 'trafo' as 'bus',
-      data: trafo as unknown as PandaPowerBus
+      type: 'trafo',
+      data: trafo as unknown as PandaPowerBus,
+      image: transformerWindingSvg(COLORS.trafo),
     });
 
     nodes.push({
-      id: w2Id as unknown as number,
+      id: w2Id,
       label: '',
       title: title,
       color: COLORS.trafo,
-      shape: 'circle',
-      size: 6,
-      borderWidth: 2,
+      shape: 'image',
+      size: 10,
+      borderWidth: 0,
       font: { color: '#e5e5e5' },
-      type: 'trafo' as 'bus',
-      data: trafo as unknown as PandaPowerBus
+      type: 'trafo',
+      data: trafo as unknown as PandaPowerBus,
+      image: transformerWindingSvg(COLORS.trafo),
     });
 
     edges.push({
       id: `trafo_${trafoIndex}_hv`,
       from: hvBus,
-      to: w1Id as unknown as number,
+      to: w1Id,
       label: '',
       title: title,
       color: { color: COLORS.trafo, highlight: '#333333' },
@@ -412,8 +430,8 @@ export function convertToVisNetwork(network: PandaPowerNetwork): {
 
     edges.push({
       id: `trafo_${trafoIndex}_mid`,
-      from: w1Id as unknown as number,
-      to: w2Id as unknown as number,
+      from: w1Id,
+      to: w2Id,
       label: '',
       title: title,
       color: { color: COLORS.trafo, highlight: '#333333' },
@@ -425,7 +443,7 @@ export function convertToVisNetwork(network: PandaPowerNetwork): {
 
     edges.push({
       id: `trafo_${trafoIndex}_lv`,
-      from: w2Id as unknown as number,
+      from: w2Id,
       to: lvBus,
       label: '',
       title: title,
@@ -890,16 +908,40 @@ export function getNetworkStatistics(network: PandaPowerNetwork): Record<string,
   };
 }
 
-/** Extract geographic coordinates from bus geo fields (WKT POINT format). */
+/**
+ * Extract geographic coordinates from bus geo fields.
+ * Supports both WKT POINT format ("POINT(lon lat)") and
+ * GeoJSON format ({"type":"Point","coordinates":[lon,lat]}).
+ */
 export function extractGeodata(network: PandaPowerNetwork): BusGeoData[] {
   const results: BusGeoData[] = [];
   for (const bus of Object.values(network.bus)) {
     if (!bus.geo) continue;
-    const match = bus.geo.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i);
-    if (!match) continue;
-    const longitude = parseFloat(match[1]);
-    const latitude = parseFloat(match[2]);
-    if (isNaN(latitude) || isNaN(longitude)) continue;
+
+    let longitude: number | undefined;
+    let latitude: number | undefined;
+
+    // Try WKT POINT format: "POINT(lon lat)"
+    const wktMatch = bus.geo.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i);
+    if (wktMatch) {
+      longitude = parseFloat(wktMatch[1]);
+      latitude = parseFloat(wktMatch[2]);
+    } else {
+      // Try GeoJSON format: {"type":"Point","coordinates":[lon,lat]}
+      try {
+        const geoStr = typeof bus.geo === 'string' ? bus.geo : JSON.stringify(bus.geo);
+        const geoJson = JSON.parse(geoStr);
+        if (geoJson?.type === 'Point' && Array.isArray(geoJson.coordinates) && geoJson.coordinates.length >= 2) {
+          longitude = geoJson.coordinates[0];
+          latitude = geoJson.coordinates[1];
+        }
+      } catch {
+        // Not valid JSON, skip
+      }
+    }
+
+    if (longitude === undefined || latitude === undefined || isNaN(latitude) || isNaN(longitude)) continue;
+
     results.push({
       bus: bus.index,
       name: bus.name || `Bus ${bus.index}`,

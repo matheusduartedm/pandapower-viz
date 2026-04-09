@@ -2,9 +2,11 @@ import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { Network, Options } from 'vis-network';
 import { DataSet } from 'vis-data';
 import type { PandaPowerNetwork, ElementInfo, BusAnnotation, VizAnalysisResults } from '../core/types';
+import { isBusNode } from '../core/types';
 import { getElementInfo, getCompactBusInfo, convertToVisNetwork, convertToVisNetworkCompact } from '../core/parser';
-import { calculateTreeLayout } from '../core/layout';
+import { calculateTreeLayout, calculateGeoLayout } from '../core/layout';
 import { COLORS } from '../core/colors';
+import { extGridSvg, loadSvg, generatorSvg, sgenSvg, storageSvg, transformerWindingSvg } from '../core/symbols';
 
 /**
  * Props for the NetworkDiagram component.
@@ -56,7 +58,7 @@ export function NetworkDiagram({
   const busAnnotations = 'busAnnotations' in visData ? visData.busAnnotations : new Map<number, BusAnnotation>();
 
   const [physicsEnabled, setPhysicsEnabled] = useState(false);
-  const nodeSize = 8;
+  const nodeSize = 10;
   const [showLabels, setShowLabels] = useState(!isCompactMode);
   const [colorMode, setColorMode] = useState<'type' | 'voltage' | 'loading'>('type');
 
@@ -91,21 +93,21 @@ export function NetworkDiagram({
     [nodes, edges, network, onElementSelect, isCompactMode, busAnnotations]
   );
 
+  const hasGeo = useMemo(() => Object.values(network.bus).some(b => b.geo), [network]);
+  const bgStrokeColor = theme === 'dark' ? '#1a1a1c' : '#ffffff';
+
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const layoutBusCount = nodes.filter(
-      (n) =>
-        !String(n.id).startsWith('load_') &&
-        !String(n.id).startsWith('sgen_') &&
-        !String(n.id).startsWith('gen_')
-    ).length;
+    const layoutBusCount = nodes.filter((n) => isBusNode(n.id)).length;
     const layoutW = isCompactMode ? Math.max(5000, layoutBusCount * 4) : 5000;
     const layoutH = isCompactMode ? Math.max(3000, layoutBusCount * 2.5) : 3000;
-    const nodePositions = calculateTreeLayout(nodes, edges, layoutW, layoutH);
+    const nodePositions = hasGeo
+      ? calculateGeoLayout(nodes, edges, network, layoutW, layoutH)
+      : calculateTreeLayout(nodes, edges, layoutW, layoutH);
     const adjustedPositions = new Map(nodePositions);
 
-    if (!isCompactMode) {
+    if (!isCompactMode && !hasGeo) {
       const trafoLinks = new Map<string, { hv?: NodeId; lv?: NodeId; w1?: NodeId; w2?: NodeId }>();
 
       edges.forEach((edge) => {
@@ -166,10 +168,10 @@ export function NetworkDiagram({
         const shape = node.shape;
         const borderWidth = node.borderWidth;
         const fontConfig: Record<string, unknown> = {
-          size: 12,
+          size: 14,
           color: labelColors.node,
-          strokeWidth: 0,
-          strokeColor: 'transparent',
+          strokeWidth: 3,
+          strokeColor: bgStrokeColor,
           align: 'center',
         };
 
@@ -182,8 +184,8 @@ export function NetworkDiagram({
         }
 
         let nodeBackgroundColor = node.color;
-        if (colorMode === 'voltage' && analysisResults?.power_flow?.bus_results && nodeId.startsWith('bus_')) {
-          const busIndex = parseInt(nodeId.replace('bus_', ''), 10);
+        if (colorMode === 'voltage' && analysisResults?.power_flow?.bus_results && isBusNode(node.id)) {
+          const busIndex = typeof node.id === 'number' ? node.id : parseInt(String(node.id), 10);
           const busResult = analysisResults.power_flow.bus_results.find((b) => b.bus === busIndex);
           if (busResult) {
             const vm = busResult.vm_pu;
@@ -197,19 +199,39 @@ export function NetworkDiagram({
           }
         }
 
-        const nodeColor = isTrafoWinding
+        let nodeImage = node.image;
+        if (nodeImage && nodeBackgroundColor !== node.color) {
+          switch (node.type) {
+            case 'ext_grid': nodeImage = extGridSvg(nodeBackgroundColor); break;
+            case 'load': nodeImage = loadSvg(nodeBackgroundColor); break;
+            case 'gen': nodeImage = generatorSvg(nodeBackgroundColor); break;
+            case 'sgen': nodeImage = sgenSvg(nodeBackgroundColor); break;
+            case 'storage': nodeImage = storageSvg(nodeBackgroundColor); break;
+            case 'trafo': nodeImage = transformerWindingSvg(nodeBackgroundColor); break;
+          }
+        }
+
+        const isImageNode = shape === 'image';
+        const nodeColor = isImageNode
           ? {
               background: 'transparent',
-              border: node.color,
-              highlight: { background: 'rgba(255,255,255,0.1)', border: '#ffffff' },
-              hover: { background: 'rgba(255,255,255,0.05)', border: '#e5e5e5' },
+              border: 'transparent',
+              highlight: { background: 'transparent', border: COLORS.highlight },
+              hover: { background: 'transparent', border: COLORS.hover },
             }
-          : {
-              background: nodeBackgroundColor,
-              border: nodeBackgroundColor,
-              highlight: { background: COLORS.highlight, border: COLORS.highlight },
-              hover: { background: COLORS.hover, border: COLORS.hover },
-            };
+          : isTrafoWinding
+            ? {
+                background: 'transparent',
+                border: node.color,
+                highlight: { background: 'rgba(255,255,255,0.1)', border: '#ffffff' },
+                hover: { background: 'rgba(255,255,255,0.05)', border: '#e5e5e5' },
+              }
+            : {
+                background: nodeBackgroundColor,
+                border: nodeBackgroundColor,
+                highlight: { background: COLORS.highlight, border: COLORS.highlight },
+                hover: { background: COLORS.hover, border: COLORS.hover },
+              };
 
         return {
           id: node.id,
@@ -222,7 +244,7 @@ export function NetworkDiagram({
           size: size,
           borderWidth: borderWidth,
           font: fontConfig,
-          image: node.image,
+          image: nodeImage,
         };
       })
     );
@@ -276,10 +298,10 @@ export function NetworkDiagram({
           dashes: edge.dashes,
           smooth: false,
           font: {
-            size: 10,
+            size: 12,
             color: labelColors.edge,
-            strokeWidth: 0,
-            strokeColor: 'transparent',
+            strokeWidth: 2,
+            strokeColor: bgStrokeColor,
             align: 'middle' as const,
           },
         };
@@ -289,20 +311,20 @@ export function NetworkDiagram({
     const options: Options = {
       nodes: {
         font: {
-          size: isCompactMode ? 0 : 12,
+          size: isCompactMode ? 0 : 14,
           color: labelColors.node,
-          strokeWidth: 0,
-          strokeColor: 'transparent',
+          strokeWidth: 3,
+          strokeColor: bgStrokeColor,
         },
         scaling: { label: { drawThreshold: 0 } },
       },
       edges: {
         font: {
-          size: isCompactMode ? 0 : 10,
+          size: isCompactMode ? 0 : 12,
           align: 'middle',
           color: labelColors.edge,
-          strokeWidth: 0,
-          strokeColor: 'transparent',
+          strokeWidth: 2,
+          strokeColor: bgStrokeColor,
         },
         scaling: { label: { drawThreshold: 0 } },
         smooth: false,
@@ -376,7 +398,7 @@ export function NetworkDiagram({
             const currentPos = positions[nId];
             if (currentPos) {
               nodesDataSet.update({
-                id: otherId as unknown as number,
+                id: otherId,
                 x: currentPos.x + dragOffset.dx,
                 y: currentPos.y + dragOffset.dy,
               });

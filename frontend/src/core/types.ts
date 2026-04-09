@@ -159,9 +159,25 @@ export interface PandaPowerNetwork {
   sn_mva?: number;
 }
 
+/** Element type for vis-network nodes. */
+export type NetworkNodeType = 'bus' | 'ext_grid' | 'load' | 'sgen' | 'gen' | 'storage' | 'trafo';
+
+const ELEMENT_PREFIXES = ['load_', 'sgen_', 'gen_', 'storage_', 'trafo_'] as const;
+
+/** Returns true if the node ID belongs to an element (load, sgen, gen, storage, trafo). */
+export function isElementNode(id: number | string): boolean {
+  const s = String(id);
+  return ELEMENT_PREFIXES.some(p => s.startsWith(p));
+}
+
+/** Returns true if the node ID belongs to a bus (not an element). */
+export function isBusNode(id: number | string): boolean {
+  return !isElementNode(id);
+}
+
 /** A vis-network node representing a bus or element in the network diagram. */
 export interface NetworkNode {
-  id: number;
+  id: number | string;
   label: string;
   title: string;
   color: string;
@@ -169,7 +185,7 @@ export interface NetworkNode {
   size: number;
   borderWidth: number;
   font: { color: string };
-  type: 'bus' | 'ext_grid';
+  type: NetworkNodeType;
   data: PandaPowerBus | PandaPowerExtGrid;
   image?: string;
 }
@@ -177,8 +193,8 @@ export interface NetworkNode {
 /** A vis-network edge representing a line, transformer, or switch connection. */
 export interface NetworkEdge {
   id: string;
-  from: number;
-  to: number;
+  from: number | string;
+  to: number | string;
   label: string;
   title: string;
   color: { color: string; highlight: string };
