@@ -3,7 +3,7 @@
  * Renders a pandapower network diagram using vis-network (no React).
  */
 import { parsePandaPowerJson, convertToVisNetwork, convertToVisNetworkCompact, getElementInfo, getCompactBusInfo } from './core/parser';
-import { calculateTreeLayout } from './core/layout';
+import { calculateTreeLayout, calculateGeoLayout } from './core/layout';
 import { COLORS } from './core/colors';
 import type { PandaPowerNetwork, NetworkNode, NetworkEdge, BusAnnotation } from './core/types';
 import { Network, type Options } from 'vis-network';
@@ -33,7 +33,10 @@ function renderNetwork(container: HTMLElement, network: PandaPowerNetwork, infoP
   // Calculate layout
   const layoutW = isCompact ? Math.max(5000, busCount * 4) : 5000;
   const layoutH = isCompact ? Math.max(3000, busCount * 2.5) : 3000;
-  const positions = calculateTreeLayout(nodes, edges, layoutW, layoutH);
+  const hasGeo = Object.values(network.bus).some(b => b.geo);
+  const positions = hasGeo
+    ? calculateGeoLayout(nodes, edges, network, layoutW, layoutH)
+    : calculateTreeLayout(nodes, edges, layoutW, layoutH);
 
   // Build vis-network datasets
   const nodesDataSet = new DataSet(nodes.map(node => {
@@ -54,6 +57,7 @@ function renderNetwork(container: HTMLElement, network: PandaPowerNetwork, infoP
       size: node.type === 'ext_grid' ? 10 : 6,
       borderWidth: node.borderWidth,
       font: { color: '#e5e5e5', size: isCompact ? 0 : 12, strokeWidth: 0 },
+      image: node.image,
     };
   }));
 

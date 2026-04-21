@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -44,7 +44,7 @@ const ICONS = {
  * Props for the NetworkMap component.
  * @param network - The pandapower network to visualize on a map.
  * @param theme - Color theme ('dark' or 'light'). Default: 'dark'.
- * @param onElementSelect - Callback when user clicks a bus marker.
+ * @param onElementSelect - Callback when user clicks a bus marker, line, or transformer.
  * @param analysisResults - Power flow results for voltage/loading color modes.
  * @param noGeoDataMessage - Custom message when no geographic data is available.
  * @param className - Additional CSS class for the container.
@@ -84,20 +84,20 @@ export function NetworkMap({
   const [, setSelectedBus] = useState<number | null>(null);
   const [mapColorMode, setMapColorMode] = useState<'default' | 'voltage' | 'loading'>('default');
 
-  const busGeoMap = useRef(new Map<number, BusGeoData>());
-  useEffect(() => {
-    busGeoMap.current.clear();
-    geodata.forEach((g) => busGeoMap.current.set(g.bus, g));
+  const busGeoMap = useMemo(() => {
+    const map = new Map<number, BusGeoData>();
+    geodata.forEach((g) => map.set(g.bus, g));
+    return map;
   }, [geodata]);
 
-  const busResultsMap = useRef(new Map<number, { vm_pu: number }>());
-  useEffect(() => {
-    busResultsMap.current.clear();
+  const busResultsMap = useMemo(() => {
+    const map = new Map<number, { vm_pu: number }>();
     if (analysisResults?.power_flow?.bus_results) {
       analysisResults.power_flow.bus_results.forEach((result) => {
-        busResultsMap.current.set(result.bus, { vm_pu: result.vm_pu });
+        map.set(result.bus, { vm_pu: result.vm_pu });
       });
     }
+    return map;
   }, [analysisResults]);
 
   const getVoltageColor = useCallback((vm_pu: number) => {
@@ -115,8 +115,8 @@ export function NetworkMap({
   const getDrawableLines = useCallback(() => {
     const lines: Array<{ id: number; from: [number, number]; to: [number, number]; name: string; loading?: number }> = [];
     Object.values(network.line).forEach((line) => {
-      const fromGeo = busGeoMap.current.get(line.from_bus);
-      const toGeo = busGeoMap.current.get(line.to_bus);
+      const fromGeo = busGeoMap.get(line.from_bus);
+      const toGeo = busGeoMap.get(line.to_bus);
       if (fromGeo && toGeo) {
         const loading = network.res_line?.[String(line.index)]?.loading_percent;
         lines.push({
@@ -129,13 +129,13 @@ export function NetworkMap({
       }
     });
     return lines;
-  }, [network]);
+  }, [network, busGeoMap]);
 
   const getDrawableTrafos = useCallback(() => {
     const trafos: Array<{ id: number; from: [number, number]; to: [number, number]; name: string }> = [];
     Object.values(network.trafo).forEach((trafo) => {
-      const hvGeo = busGeoMap.current.get(trafo.hv_bus);
-      const lvGeo = busGeoMap.current.get(trafo.lv_bus);
+      const hvGeo = busGeoMap.get(trafo.hv_bus);
+      const lvGeo = busGeoMap.get(trafo.lv_bus);
       if (hvGeo && lvGeo) {
         trafos.push({
           id: trafo.index,
@@ -146,7 +146,7 @@ export function NetworkMap({
       }
     });
     return trafos;
-  }, [network]);
+  }, [network, busGeoMap]);
 
   const getBusType = useCallback(
     (busIndex: number) => {
@@ -181,6 +181,54 @@ export function NetworkMap({
           onElementSelect({ type: 'Bus', id: busIndex, name: bus.name || `Bus ${busIndex}`, properties });
         }
       }
+    },
+    [network, onElementSelect]
+  );
+
+  const handleLineClick = useCallback(
+    (lineId: number) => {
+      if (!onElementSelect) return;
+      const line = network.line[String(lineId)];
+      if (!line) return;
+      const properties: Record<string, string | number | boolean> = {
+        Index: line.index,
+        Name: line.name || 'N/A',
+        'From Bus': line.from_bus,
+        'To Bus': line.to_bus,
+        'Length (km)': line.length_km?.toFixed(3) || 'N/A',
+        'R (Ohm/km)': line.r_ohm_per_km?.toFixed(4) || 'N/A',
+        'X (Ohm/km)': line.x_ohm_per_km?.toFixed(4) || 'N/A',
+        'Max I (kA)': line.max_i_ka || 'N/A',
+        'In Service': line.in_service !== false,
+      };
+      if (network.res_line?.[String(lineId)]) {
+        const resLine = network.res_line[String(lineId)];
+        properties['Loading (%)'] = resLine.loading_percent?.toFixed(2) || 'N/A';
+        properties['I (kA)'] = resLine.i_ka?.toFixed(4) || 'N/A';
+      }
+      onElementSelect({ type: 'Line', id: lineId, name: line.name || `Line ${lineId}`, properties });
+    },
+    [network, onElementSelect]
+  );
+
+  const handleTrafoClick = useCallback(
+    (trafoId: number) => {
+      if (!onElementSelect) return;
+      const trafo = network.trafo[String(trafoId)];
+      if (!trafo) return;
+      const properties: Record<string, string | number | boolean> = {
+        Index: trafo.index,
+        'HV Bus': trafo.hv_bus,
+        'LV Bus': trafo.lv_bus,
+        'Rating (MVA)': trafo.sn_mva || 'N/A',
+        'HV (kV)': trafo.vn_hv_kv || 'N/A',
+        'LV (kV)': trafo.vn_lv_kv || 'N/A',
+        'In Service': trafo.in_service !== false,
+      };
+      if (trafo.tap_pos !== undefined) {
+        properties['Tap Position'] = trafo.tap_pos;
+      }
+      onElementSelect({ type: 'Transformer', id: trafoId, name: trafo.name || `Transformer ${trafoId}`, properties });
     },
     [network, onElementSelect]
   );
@@ -237,6 +285,7 @@ export function NetworkMap({
             key={`line-${line.id}`}
             positions={[line.from, line.to]}
             pathOptions={{ color: getLineColorForMode(line.loading), weight: 3, opacity: 0.8 }}
+            eventHandlers={{ click: () => handleLineClick(line.id) }}
           >
             <Popup>
               <strong>{line.name}</strong>
@@ -255,6 +304,7 @@ export function NetworkMap({
             key={`trafo-${trafo.id}`}
             positions={[trafo.from, trafo.to]}
             pathOptions={{ color: COLORS.trafo, weight: 4, opacity: 0.9, dashArray: '10, 5' }}
+            eventHandlers={{ click: () => handleTrafoClick(trafo.id) }}
           >
             <Popup>
               <strong>{trafo.name}</strong>
@@ -266,7 +316,7 @@ export function NetworkMap({
           const busType = getBusType(bus.bus);
           let icon = ICONS[busType as keyof typeof ICONS] || ICONS.bus;
           if (mapColorMode === 'voltage') {
-            const busResult = busResultsMap.current.get(bus.bus);
+            const busResult = busResultsMap.get(bus.bus);
             if (busResult) {
               const color = getVoltageColor(busResult.vm_pu);
               icon = createIcon(color, 20);
