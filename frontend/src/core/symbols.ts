@@ -54,7 +54,7 @@ export function generatorSvg(color: string): string {
   return toDataUri(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 20 20">` +
       `<circle cx="10" cy="10" r="8.5" fill="none" stroke="${color}" stroke-width="1.5"/>` +
-      `<text x="10" y="14" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" font-weight="bold" fill="${color}">G</text>` +
+      `<text x="10" y="14" text-anchor="middle" font-family="STIX Two Text, serif" font-size="10" font-weight="bold" fill="${color}">G</text>` +
     `</svg>`
   );
 }
@@ -108,7 +108,7 @@ export function sgenWindSvg(color: string): string {
   return toDataUri(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 20 20">` +
       `<circle cx="10" cy="10" r="8.5" fill="none" stroke="${color}" stroke-width="1.5"/>` +
-      `<text x="10" y="14" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="${color}">~</text>` +
+      `<text x="10" y="14" text-anchor="middle" font-family="STIX Two Text, serif" font-size="12" fill="${color}">~</text>` +
     `</svg>`
   );
 }

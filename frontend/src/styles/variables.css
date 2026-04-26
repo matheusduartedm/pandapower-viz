@@ -1,36 +1,72 @@
+@font-face {
+  font-family: 'STIX Two Text';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('/fonts/STIXTwoText-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'STIX Two Text';
+  font-style: normal;
+  font-weight: 500;
+  font-display: block;
+  src: url('/fonts/STIXTwoText-Medium.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'STIX Two Text';
+  font-style: normal;
+  font-weight: 600;
+  font-display: block;
+  src: url('/fonts/STIXTwoText-SemiBold.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'STIX Two Text';
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url('/fonts/STIXTwoText-Bold.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'STIX Two Text';
+  font-style: italic;
+  font-weight: 400;
+  font-display: block;
+  src: url('/fonts/STIXTwoText-Italic.ttf') format('truetype');
+}
+
 /* Dark theme (default) */
 :root,
 [data-ppviz-theme="dark"] {
-  --ppviz-bg-primary: #1a1a1c;
-  --ppviz-bg-secondary: #222224;
-  --ppviz-bg-tertiary: #2a2a2d;
-  --ppviz-bg-hover: #2e2e30;
-  --ppviz-border-color: #38383b;
-  --ppviz-border-subtle: #2a2a2d;
-  --ppviz-text-primary: #cccccc;
-  --ppviz-text-secondary: #969696;
-  --ppviz-text-muted: #6e6e6e;
-  --ppviz-brand-accent: #36B5A0;
-  --ppviz-accent-fg: #1a1a1c;
-  --ppviz-network-bg: #181818;
+  --ppviz-bg-primary: #132026;
+  --ppviz-bg-secondary: #1a2a30;
+  --ppviz-bg-tertiary: #213138;
+  --ppviz-bg-hover: #263740;
+  --ppviz-border-color: #2c3f48;
+  --ppviz-border-subtle: #213138;
+  --ppviz-text-primary: #fef6e9;
+  --ppviz-text-secondary: #c4d0d4;
+  --ppviz-text-muted: #8b9a9d;
+  --ppviz-brand-accent: #5f787d;
+  --ppviz-accent-fg: #132026;
+  --ppviz-network-bg: #0e1a1f;
   --ppviz-radius-sm: 3px;
   --ppviz-radius-md: 6px;
-  --ppviz-font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --ppviz-font-family: 'STIX Two Text', serif;
   --ppviz-font-mono: 'JetBrains Mono', monospace;
 }
 
 /* Light theme */
 [data-ppviz-theme="light"] {
-  --ppviz-bg-primary: #ffffff;
-  --ppviz-bg-secondary: #f5f5f5;
-  --ppviz-bg-tertiary: #ebebeb;
-  --ppviz-bg-hover: #e0e0e0;
-  --ppviz-border-color: #d4d4d4;
-  --ppviz-border-subtle: #e5e5e5;
-  --ppviz-text-primary: #1a1a1a;
-  --ppviz-text-secondary: #525252;
-  --ppviz-text-muted: #a3a3a3;
-  --ppviz-brand-accent: #2a9d8f;
-  --ppviz-accent-fg: #ffffff;
-  --ppviz-network-bg: #fafafa;
+  --ppviz-bg-primary: #fef6e9;
+  --ppviz-bg-secondary: #f5ecd9;
+  --ppviz-bg-tertiary: #ede2c9;
+  --ppviz-bg-hover: #e6d8b8;
+  --ppviz-border-color: #d7c8aa;
+  --ppviz-border-subtle: #e6d8b8;
+  --ppviz-text-primary: #132026;
+  --ppviz-text-secondary: #3a4a4f;
+  --ppviz-text-muted: #7a8a8d;
+  --ppviz-brand-accent: #5f787d;
+  --ppviz-accent-fg: #fef6e9;
+  --ppviz-network-bg: #f5ecd9;
 }

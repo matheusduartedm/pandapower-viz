@@ -101,8 +101,8 @@ export function NetworkDiagram({
     (node: typeof nodes[0], labels: boolean, mode: typeof colorMode, results: typeof analysisResults, currentTheme: typeof theme) => {
       const nodeId = String(node.id);
       const isTrafoWinding = /^trafo_\d+_(w1|w2)$/.test(nodeId);
-      const bgStroke = currentTheme === 'dark' ? '#1a1a1c' : '#ffffff';
-      const labelColor = currentTheme === 'dark' ? '#e5e5e5' : '#333333';
+      const bgStroke = currentTheme === 'dark' ? '#132026' : '#fef6e9';
+      const labelColor = currentTheme === 'dark' ? '#fef6e9' : '#132026';
 
       let nodeBackgroundColor = node.color;
       if (mode === 'voltage' && results?.power_flow?.bus_results && isBusNode(node.id)) {
@@ -140,8 +140,8 @@ export function NetworkDiagram({
           ? {
               background: 'transparent',
               border: node.color,
-              highlight: { background: 'rgba(255,255,255,0.1)', border: '#ffffff' },
-              hover: { background: 'rgba(255,255,255,0.05)', border: '#e5e5e5' },
+              highlight: { background: 'rgba(254,246,233,0.1)', border: '#fef6e9' },
+              hover: { background: 'rgba(254,246,233,0.05)', border: '#fef6e9' },
             }
           : {
               background: nodeBackgroundColor,
@@ -167,8 +167,8 @@ export function NetworkDiagram({
       const isConnection = edgeId.includes('_conn_');
       const isTrafoEdge = edgeId.startsWith('trafo_');
       const isSwitch = edgeId.startsWith('switch_');
-      const bgStroke = currentTheme === 'dark' ? '#1a1a1c' : '#ffffff';
-      const edgeLabelColor = currentTheme === 'dark' ? '#a1a1aa' : '#666666';
+      const bgStroke = currentTheme === 'dark' ? '#132026' : '#fef6e9';
+      const edgeLabelColor = currentTheme === 'dark' ? '#8b9a9d' : '#5f787d';
 
       let edgeLabel = '';
       if (labels && !isConnection && !isTrafoEdge && !(isSwitch && edgeId.endsWith('_a'))) {
@@ -214,9 +214,9 @@ export function NetworkDiagram({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const bgStrokeColor = theme === 'dark' ? '#1a1a1c' : '#ffffff';
-    const nodeLabelColor = theme === 'dark' ? '#e5e5e5' : '#333333';
-    const edgeLabelColor = theme === 'dark' ? '#a1a1aa' : '#666666';
+    const bgStrokeColor = theme === 'dark' ? '#132026' : '#fef6e9';
+    const nodeLabelColor = theme === 'dark' ? '#fef6e9' : '#132026';
+    const edgeLabelColor = theme === 'dark' ? '#8b9a9d' : '#5f787d';
 
     const layoutBusCount = nodes.filter((n) => isBusNode(n.id)).length;
     const layoutW = isCompactMode ? Math.max(5000, layoutBusCount * 4) : 5000;
@@ -502,9 +502,9 @@ export function NetworkDiagram({
     const net = networkRef.current;
     if (!nodesDS || !edgesDS || !net) return;
 
-    const bgStrokeColor = theme === 'dark' ? '#1a1a1c' : '#ffffff';
-    const nodeLabelColor = theme === 'dark' ? '#e5e5e5' : '#333333';
-    const edgeLabelColor = theme === 'dark' ? '#a1a1aa' : '#666666';
+    const bgStrokeColor = theme === 'dark' ? '#132026' : '#fef6e9';
+    const nodeLabelColor = theme === 'dark' ? '#fef6e9' : '#132026';
+    const edgeLabelColor = theme === 'dark' ? '#8b9a9d' : '#5f787d';
 
     // Update node appearances
     const nodeUpdates = nodes.map((node) => ({

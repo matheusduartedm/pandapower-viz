@@ -14,11 +14,11 @@
   position: absolute;
   bottom: 8px;
   left: 8px;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(19, 32, 38, 0.75);
   border-radius: 6px;
   padding: 6px 10px;
   font-size: 11px;
-  color: #e5e5e5;
+  color: #fef6e9;
   pointer-events: none;
   z-index: 10;
 }
@@ -39,7 +39,7 @@
   align-items: center;
   gap: 3px;
   font-size: 10px;
-  color: #a1a1aa;
+  color: #8b9a9d;
 }
 
 .ppviz-compact-mode-legend i {
