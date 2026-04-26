@@ -56,7 +56,7 @@
   z-index: 1000;
   font-size: 12px;
   min-width: 140px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(19, 32, 38, 0.3);
 }
 
 .ppviz-map-legend-title {

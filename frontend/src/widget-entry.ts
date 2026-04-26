@@ -56,7 +56,7 @@ function renderNetwork(container: HTMLElement, network: PandaPowerNetwork, infoP
       shape: node.shape,
       size: node.type === 'ext_grid' ? 10 : 6,
       borderWidth: node.borderWidth,
-      font: { color: '#e5e5e5', size: isCompact ? 0 : 12, strokeWidth: 0 },
+      font: { color: '#fef6e9', size: isCompact ? 0 : 12, strokeWidth: 0 },
       image: node.image,
     };
   }));
@@ -75,7 +75,7 @@ function renderNetwork(container: HTMLElement, network: PandaPowerNetwork, infoP
     width: edge.width,
     dashes: edge.dashes,
     smooth: false,
-    font: { color: '#a1a1aa', size: isCompact ? 0 : 10, strokeWidth: 0 },
+    font: { color: '#8b9a9d', size: isCompact ? 0 : 10, strokeWidth: 0 },
   })));
 
   const options: Options = {
@@ -144,11 +144,11 @@ export default {
   render({ model, el }: { model: any; el: HTMLElement }) {
     // Create container
     el.innerHTML = `
-      <div style="display:flex;height:500px;background:#1a1a1c;border-radius:6px;overflow:hidden;font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:#ccc">
+      <div style="display:flex;height:500px;background:#132026;border-radius:6px;overflow:hidden;font-family:'STIX Two Text',serif;font-size:13px;color:#fef6e9">
         <div id="ppviz-canvas" style="flex:1;position:relative"></div>
-        <div id="ppviz-info" style="display:none;width:240px;padding:10px;overflow:auto;border-left:1px solid #38383b;background:#222224"></div>
+        <div id="ppviz-info" style="display:none;width:240px;padding:10px;overflow:auto;border-left:1px solid #2c3f48;background:#1a2a30"></div>
       </div>
-      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px;color:#6e6e6e;font-family:'IBM Plex Sans',sans-serif">
+      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px;color:#8b9a9d;font-family:'STIX Two Text',serif">
         <span id="ppviz-stats"></span>
         <span>pandapower-viz</span>
       </div>

@@ -21,8 +21,8 @@ const createIcon = (color: string, size: number = 24) => {
       width: ${size}px;
       height: ${size}px;
       border-radius: 50%;
-      border: 2px solid white;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      border: 2px solid #fef6e9;
+      box-shadow: 0 2px 4px rgba(19,32,38,0.3);
     "></div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
